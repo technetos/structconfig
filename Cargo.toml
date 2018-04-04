@@ -1,0 +1,8 @@
+[package]
+name = "structconfig"
+version = "0.1.0"
+authors = ["technetos <mrgould93@gmail.com>"]
+
+[dependencies]
+yaml-rust = "0.3"
+failure = "0.1.1"
