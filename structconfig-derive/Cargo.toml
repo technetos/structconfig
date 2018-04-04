@@ -1,0 +1,11 @@
+[package]
+name = "structconfig-derive"
+version = "0.1.0"
+authors = ["technetos <mrgould93@gmail.com>"]
+
+[dependencies]
+syn = "0.13"
+quote = "0.5"
+
+[lib]
+proc-macro = true
