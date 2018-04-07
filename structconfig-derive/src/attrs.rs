@@ -1,11 +1,10 @@
 use quote::Tokens;
-use syn::{Attribute, MetaNameValue};
+use syn::{Attribute, Field, MetaNameValue};
 
 #[derive(Debug)]
 pub struct Attrs {
-    file_name: String,
-    file_type: String,
-    directives: Vec<Directive>,
+    name: String,
+    methods: Vec<Directive>,
 }
 
 #[derive(Debug)]
@@ -15,25 +14,21 @@ struct Directive {
 }
 
 impl Attrs {
-    fn new() -> Attrs {
+    fn new(name: String) -> Attrs {
         Attrs {
-            file_name: "".to_owned(),
-            file_type: "".to_owned(),
-            directives: vec![],
+            name,
+            methods: vec![],
         }
     }
 
-    // Grab the filename and filetype from the attribute on
-    // the user defined struct
-    fn set_file_metadata(&mut self, name: &str, arg: &str) {
-        match (name, arg) {
-            ("filename", fname) => self.file_name = fname.into(),
-            ("filetype", ftype) => self.file_type = ftype.into(),
-            _ => (),
-        };
+    fn set_method(&mut self, name: &str, arg: &str) {
+        self.methods.push(Directive {
+            name: name.into(),
+            args: quote!(#arg),
+        });
     }
 
-    fn push_attrs(&mut self, attrs: &[Attribute]) {
+    fn extract_attrs(&mut self, attrs: &[Attribute]) {
         use Lit::*;
         use Meta::*;
         use NestedMeta::*;
@@ -60,19 +55,36 @@ impl Attrs {
         valid_tokens.into_iter().for_each(|token| match token {
             #[cfg_attr(rustfmt, rustfmt_skip)]
             NameValue(MetaNameValue { ident, lit: Str(ref value), .. }) => {
-              self.set_file_metadata(ident.as_ref(), &value.value())
+              self.set_method(ident.as_ref(), &value.value())
             },
             _ => panic!("Unsupported"),
         });
     }
 
-    pub fn debug_handle(attrs: &[Attribute]) {
-        let mut res = Self::new();
-        res.push_attrs(attrs);
+    pub fn from_struct(attrs: &[Attribute], name: String) -> Attrs {
+        let mut res = Self::new(name);
+        res.extract_attrs(attrs);
+        res
     }
 
-    //  pub fn from_struct(attrs: &[Attribute], name: String) -> Attrs {
-    //    let mut res = Self::new(name);
-    //    res.push_attrs(attrs);
-    //  }
+    pub fn from_field(field: &Field) -> Attrs {
+        let name: String = field.ident.as_ref().unwrap().to_string();
+        let mut res = Self::new(name);
+        res.extract_attrs(&field.attrs);
+        res
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn methods(&self) -> Tokens {
+        let methods = self.methods
+            .iter()
+            .map(|&Directive { ref name, ref args }| {
+                let name: ::syn::Ident = name.as_str().into();
+                quote!(#name(#args))
+            });
+        quote!(#(#methods)*)
+    }
 }

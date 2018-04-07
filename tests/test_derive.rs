@@ -6,17 +6,17 @@ extern crate structconfig;
 use structconfig::StructConfig;
 
 #[derive(StructConfig)]
-#[structconfig(filename = "test.yml", filetype = "yaml")]
+#[structconfig(filename = "test.yml")]
 struct Tester {
     #[structconfig(key = "cc")]
-    compiler: String,
+    pub compiler: String,
 
     #[structconfig(key = "ld")]
-    linker: String,
+    pub linker: String,
 }
 
 #[test]
 fn tester_derive() {
-
-  let test = Tester::open();
+    let test = Tester::open();
+    assert_eq!(test.compiler, "gcc");
 }
