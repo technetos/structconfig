@@ -6,3 +6,4 @@ authors = ["technetos <mrgould93@gmail.com>"]
 [dependencies]
 yaml-rust = "0.3"
 failure = "0.1.1"
+structconfig-derive = { path = "structconfig-derive", version = "0.1.0" }
