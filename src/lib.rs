@@ -1,11 +1,19 @@
 extern crate failure;
-extern crate yaml_rust as _yaml_rust;
+extern crate yaml_rust;
+
+#[allow(unused_imports)]
+#[macro_use]
+extern crate structconfig_derive;
+
+pub use structconfig_derive::*;
 
 use std::{fs, io::Read, path::Path};
 
 use failure::{Error, ResultExt};
 
-pub fn from_file(file_name: &Path) -> Result<String, Error> {
+use yaml_rust::{Yaml, YamlLoader};
+
+fn from_file(file_name: &Path) -> Result<String, Error> {
     let mut file = fs::File::open(&file_name)
         .context({ format!("failed to open file: `{}`", &file_name.display()) })?;
 
@@ -16,14 +24,19 @@ pub fn from_file(file_name: &Path) -> Result<String, Error> {
     Ok(content)
 }
 
-// Re-export of yaml_rust
-pub mod yaml_rust {
-    pub use _yaml_rust::*;
+pub fn as_yaml(file_name: &Path) -> Result<Vec<Yaml>, Error> {
+    let content = from_file(file_name)?;
+    let parsed_content = YamlLoader::load_from_str(&content)
+        .compat()
+        .with_context(|e| format!("parsing error: `{}`", e))?;
+
+    Ok(parsed_content)
 }
 
 pub trait StructConfig {
-    fn from_yaml() -> Self;
-}
+    fn parse_config() -> Self;
 
-#[cfg(test)]
-mod tests {}
+    fn open() -> Self where Self: Sized {
+      Self::parse_config()
+    }
+}
