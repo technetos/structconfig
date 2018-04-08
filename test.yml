@@ -1,2 +1,9 @@
 cc: gcc
 ld: linker
+buildNo: 1
+version: 1.0 
+debug: true
+authors: ['technetos']
+build:
+  kind: static
+
