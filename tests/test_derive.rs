@@ -6,7 +6,7 @@ extern crate structconfig;
 use structconfig::StructConfig;
 
 #[derive(StructConfig)]
-#[structconfig(filename = "test.yml")]
+#[structconfig(filename = "test.yml", filetype = "yaml")]
 struct Tester {
     #[structconfig(key = "cc")]
     pub compiler: String,

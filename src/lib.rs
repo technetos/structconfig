@@ -51,7 +51,7 @@ impl Parsed {
         self.data[0][name].as_str().unwrap().to_owned()
     }
 
-    pub fn filename(name: &str) -> Parsed {
+    pub fn open(name: &str) -> Parsed {
         Parsed {
             data: as_yaml(Path::new(name)),
         }
