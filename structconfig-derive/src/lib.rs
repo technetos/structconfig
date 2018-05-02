@@ -6,9 +6,9 @@ extern crate quote;
 
 mod attrs;
 
-use attrs::Attrs;
+use attrs::{from_field, from_struct};
 use proc_macro::TokenStream;
-use syn::{*, punctuated::Punctuated, token::Comma};
+use syn::{punctuated::Punctuated, token::Comma, *};
 
 // Generate the `StructConfig` impl
 #[proc_macro_derive(StructConfig)]
@@ -18,31 +18,32 @@ pub fn structconfig(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
-fn gen_ctor(name: &Ident, attrs: &[Attribute], fields: &Punctuated<Field, Comma>) -> quote::Tokens {
+fn gen_ctor(fields: &Punctuated<Field, Comma>) -> quote::Tokens {
     let fields = fields.iter().map(|field| {
-        let field_attrs = Attrs::from_field(field);
-        let method = field_attrs.methods();
+        let field_attrs = from_field(field);
+        let method = field_attrs.method();
         let field_name = field.ident.as_ref().unwrap();
 
         quote!(#field_name: parsed.#method)
     });
+
     quote! {{
       #( #fields ),*
     }}
 }
 
 fn gen_impl(name: &Ident, fields: &Punctuated<Field, Comma>, attrs: &[Attribute]) -> quote::Tokens {
-    let struct_attrs = Attrs::from_struct(attrs, name.to_string());
-    let field_block = gen_ctor(name, attrs, fields);
+    let struct_attrs = from_struct(attrs);
+    let field_block = gen_ctor(fields);
+    let file_name = struct_attrs.file_name();
 
-    let file_name = struct_attrs.methods();
-
+    // Generate the implementation of the StructConfig trait
     quote! {
       impl ::structconfig::StructConfig for #name {
         fn parse_config() -> Self {
-            let parsed = ::structconfig::Parsed::#file_name;
+          let parsed = ::structconfig::YamlParser::parse(#file_name);
 
-            #name #field_block
+          #name #field_block
         }
       }
     }
